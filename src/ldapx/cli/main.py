@@ -38,6 +38,8 @@ FILTER_CODES = {
     "s": "Substring split",
     "N": "Names to ANR",
     "n": "ANR garbage substring",
+    "P": "dnAttributes noise",
+    "L": "Transitive eval (link attrs)",
 }
 
 BASEDN_CODES = {
@@ -46,6 +48,8 @@ BASEDN_CODES = {
     "Q": "Double quotes",
     "O": "OID attributes",
     "X": "Hex value encoding",
+    "U": "GUID format (requires -o BaseDNGuid=hex)",
+    "I": "SID format (requires -o BaseDNSid=S-1-...)",
 }
 
 ATTRLIST_CODES = {

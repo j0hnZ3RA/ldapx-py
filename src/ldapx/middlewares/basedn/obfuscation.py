@@ -75,6 +75,46 @@ def double_quotes_basedn_obf():
     return mw
 
 
+def guid_basedn_obf(guid_hex):
+    """Replace the BaseDN with the <GUID=hex> alternative form.
+
+    Per MS-ADTS 3.1.1.3.1.2.4, AD supports alternative DN forms including
+    <GUID=object_guid> where object_guid is the hex representation of the
+    objectGUID attribute. This completely changes the BaseDN format, making
+    it unrecognizable as a traditional DN.
+
+    The guid_hex parameter should be the hex string of the objectGUID
+    (e.g., "f1f089baf8d27c488e938079cdb3b551"). Use resolve_basedn_guid()
+    helper to obtain it from an LDAP connection.
+
+    Works with any LDAP library (ldap3, badldap, etc.) — no DN parser issues.
+    """
+    def mw(dn):
+        if not dn or not guid_hex:
+            return dn
+        return "<GUID=%s>" % guid_hex
+    return mw
+
+
+def sid_basedn_obf(sid):
+    """Replace the BaseDN with the <SID=sid> alternative form.
+
+    Per MS-ADTS 3.1.1.3.1.2.4, AD supports <SID=sid> where sid is either
+    the string form (S-1-5-21-...) or hex representation of the binary SID.
+    This completely changes the BaseDN format.
+
+    The sid parameter should be a SID string (e.g., "S-1-5-21-677041200-...")
+    or hex string. Use resolve_basedn_sid() helper to obtain it.
+
+    Works with any LDAP library (ldap3, badldap, etc.) — no DN parser issues.
+    """
+    def mw(dn):
+        if not dn or not sid:
+            return dn
+        return "<SID=%s>" % sid
+    return mw
+
+
 def rand_hex_value_basedn_obf(prob=0.3):
     def mw(dn):
         parts = dn.split(",")

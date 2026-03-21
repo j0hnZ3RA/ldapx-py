@@ -23,6 +23,8 @@ from .obfuscation import (
     rand_spacing_filter_obf,
     rand_substring_split_filter_obf,
     equality_to_extensible_filter_obf,
+    rand_dn_attributes_noise_filter_obf,
+    transitive_eval_filter_obf,
     replace_tautologies_filter_obf,
 )
 
@@ -52,5 +54,7 @@ __all__ = [
     "rand_spacing_filter_obf",
     "rand_substring_split_filter_obf",
     "equality_to_extensible_filter_obf",
+    "rand_dn_attributes_noise_filter_obf",
+    "transitive_eval_filter_obf",
     "replace_tautologies_filter_obf",
 ]

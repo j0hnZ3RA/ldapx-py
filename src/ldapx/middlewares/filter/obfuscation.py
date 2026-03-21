@@ -531,6 +531,51 @@ def equality_to_extensible_filter_obf(dn=False):
     return leaf_applier(mw)
 
 
+def rand_dn_attributes_noise_filter_obf(prob=0.5):
+    """Randomly toggle dnAttributes on extensible match filters.
+
+    Per MS-ADTS 3.1.1.3.1.3.1, the dnAttributes field of MatchingRuleAssertion
+    is always ignored by AD and treated as FALSE. This means we can randomly
+    set it to True as noise without affecting query results.
+    """
+    def mw(f):
+        if isinstance(f, FilterExtensibleMatch):
+            if random.random() < prob:
+                f.dn_attributes = not f.dn_attributes
+        return f
+    return leaf_applier(mw)
+
+
+# Known link attributes that support LDAP_MATCHING_RULE_TRANSITIVE_EVAL
+_TRANSITIVE_LINK_ATTRS = {
+    "memberof", "member", "manager", "directreports",
+    "msds-membertransitive", "msds-memberoftransitive",
+}
+
+
+def transitive_eval_filter_obf():
+    """Convert equality matches on link attributes to use LDAP_MATCHING_RULE_TRANSITIVE_EVAL.
+
+    Per MS-ADTS 3.1.1.3.4.4.3, the matching rule 1.2.840.113556.1.4.1941
+    performs recursive evaluation of link attributes. For direct membership
+    queries (memberOf=DN), using the transitive rule produces equivalent
+    results while changing the query syntax.
+
+    Note: This changes semantics for nested groups (returns transitive members).
+    For direct membership queries it produces the same results.
+    """
+    def mw(f):
+        if isinstance(f, FilterEqualityMatch):
+            if f.attribute_desc.lower() in _TRANSITIVE_LINK_ATTRS:
+                return FilterExtensibleMatch(
+                    matching_rule="1.2.840.113556.1.4.1941",
+                    attribute_desc=f.attribute_desc,
+                    match_value=f.assertion_value,
+                )
+        return f
+    return leaf_applier(mw)
+
+
 def replace_tautologies_filter_obf():
     greedy_presences = [
         "objectclass", "distinguishedname", "name", "objectguid",

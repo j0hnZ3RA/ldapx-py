@@ -33,10 +33,13 @@ Filter chain codes:
   d - Bitwise decompose    I - Equality by inclusion E - Equality by exclusion
   A - Approx match         x - Extensible match      Z - Prepend zeros
   s - Substring split      N - Names to ANR          n - ANR garbage substring
+  P - dnAttributes noise   L - Transitive eval (link attrs)
 
 BaseDN chain codes:
   C - Random case          S - Random spacing        Q - Double quotes
   O - OID attributes       X - Hex value encoding
+  U - GUID format (requires BaseDNGuid option)
+  I - SID format (requires BaseDNSid option)
 
 AttrList chain codes:
   C - Random case          R - Reorder list          D - Duplicate
@@ -65,10 +68,12 @@ from .middlewares.filter.obfuscation import (
     equality_to_approx_match_filter_obf, equality_to_extensible_filter_obf,
     rand_prepend_zeros_filter_obf, rand_substring_split_filter_obf,
     anr_attribute_filter_obf, anr_substring_garbage_filter_obf,
+    rand_dn_attributes_noise_filter_obf, transitive_eval_filter_obf,
 )
 from .middlewares.basedn.obfuscation import (
     rand_case_basedn_obf, rand_spacing_basedn_obf, double_quotes_basedn_obf,
-    oid_attribute_basedn_obf, rand_hex_value_basedn_obf,
+    oid_attribute_basedn_obf, guid_basedn_obf, sid_basedn_obf,
+    rand_hex_value_basedn_obf,
 )
 from .middlewares.attrlist.obfuscation import (
     rand_case_attrlist_obf, reorder_list_attrlist_obf, duplicate_attrlist_obf,
@@ -142,6 +147,8 @@ def _build_filter_middlewares(opts=None):
         "s": lambda: rand_substring_split_filter_obf(opts.get("FiltSubstringSplitProb")),
         "N": lambda: anr_attribute_filter_obf(_ANR_SET),
         "n": lambda: anr_substring_garbage_filter_obf(opts.get("FiltANRGarbageMaxChars")),
+        "P": lambda: rand_dn_attributes_noise_filter_obf(opts.get("FiltDNAttrNoiseProb", 0.5)),
+        "L": lambda: transitive_eval_filter_obf(),
     }
 
 
@@ -154,6 +161,8 @@ def _build_basedn_middlewares(opts=None):
         "Q": lambda: double_quotes_basedn_obf(),
         "O": lambda: oid_attribute_basedn_obf(opts.get("BDNOIDMaxSpaces"), opts.get("BDNOIDMaxZeros"), opts.get("BDNOIDIncludePrefix")),
         "X": lambda: rand_hex_value_basedn_obf(opts.get("BDNHexValueProb")),
+        "U": lambda: guid_basedn_obf(opts.get("BaseDNGuid", "")),
+        "I": lambda: sid_basedn_obf(opts.get("BaseDNSid", "")),
     }
 
 
