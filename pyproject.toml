@@ -38,8 +38,8 @@ dev = ["pytest>=7.0", "pytest-cov>=4.0", "ruff>=0.4"]
 ldapx = "ldapx.cli.main:main"
 
 [project.urls]
-Homepage = "https://github.com/Macmod/ldapx-py"
-Repository = "https://github.com/Macmod/ldapx-py"
+Homepage = "https://github.com/j0hnZ3RA/ldapx-py"
+Repository = "https://github.com/j0hnZ3RA/ldapx-py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ldapx"]
