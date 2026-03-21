@@ -199,9 +199,15 @@ f = rand_case_filter_obf(0.5)(f)
 asn1_filter = ast_to_asn1(f)  # badldap ASN1 Filter object
 ```
 
-## Go Version
+## Proxy Mode
 
-For LDAP proxy mode (intercept and transform packets on the fly), use the Go version: [github.com/Macmod/ldapx](https://github.com/Macmod/ldapx)
+This library provides **programmatic obfuscation** (library + CLI). If you need **proxy mode** — intercepting and transforming LDAP packets on the fly between any tool and an LDAP server, without modifying source code — use the Go version:
+
+- [github.com/Macmod/ldapx](https://github.com/Macmod/ldapx) — LDAP proxy with real-time packet transformation, interactive shell, LDAPS/SOCKS support
+
+## Credits
+
+- [Artur Marzano (@Macmod)](https://github.com/Macmod) — Author of the original [ldapx](https://github.com/Macmod/ldapx) in Go, which this project is a Python port of. All obfuscation techniques, middleware architecture, and the parser design originate from his work.
 
 ## License
 
