@@ -203,47 +203,73 @@ f = rand_case_filter_obf(0.5)(f)
 asn1_filter = ast_to_asn1(f)  # badldap ASN1 Filter object
 ```
 
-## Known Limitations by LDAP Library
+## Compatibility Matrix
 
-ldapx-py returns obfuscated queries as **strings**. How well those strings are accepted depends on the LDAP library your project uses to send them over the wire. Below is a summary of what we found during integration testing against a real Active Directory environment.
+ldapx-py returns obfuscated queries as **strings**. How well those strings are accepted depends on the LDAP library your project uses. Below is a full compatibility matrix tested against a real Active Directory environment.
 
-### badldap (used by bloodyAD)
+### Filter codes
 
-badldap's internal PEG parser **cannot parse** most obfuscated filter syntaxes (extensible match, OID attributes with spacing, etc). The solution is to use the `ldapx.adapters.badldap` adapter, which converts the obfuscated AST directly to badldap's ASN1 Filter objects, completely bypassing the parser.
+| Code | Name | badldap | impacket | ldap3 | Notes |
+|------|------|---------|----------|-------|-------|
+| `C` | Case | via adapter | native | native | |
+| `S` | Spacing | via adapter | native | native | |
+| `G` | Garbage | via adapter | native | monkey-patch | ldap3 rejects unknown attr names |
+| `T` | Tautologies | via adapter | native | native | |
+| `R` | Reorder | via adapter | native | native | |
+| `O` | OID | via adapter | **FAIL** | monkey-patch | impacket/ldap3 reject `oID.` format |
+| `X` | Hex value | via adapter | native | native | |
+| `t` | Timestamp | via adapter | native | native | |
+| `B` | AddBool | via adapter | native | native | |
+| `D` | DblNeg | via adapter | native | native | |
+| `M` | DeMorgan | via adapter | native | native | |
+| `b` | Bitwise | via adapter | native | native | |
+| `d` | Decompose | via adapter | native | native | |
+| `I` | Inclusion | via adapter | native | native | |
+| `E` | Exclusion | via adapter | native | native | |
+| `A` | Approx | via adapter | native | native | |
+| `x` | Extensible | via adapter | native | native | |
+| `Z` | Zeros | via adapter | native | native | |
+| `s` | Substring | via adapter | native | native | |
+| `N` | ANR | via adapter | native | native | |
+| `n` | ANR garbage | via adapter | native | native | |
+| `P` | dnAttr noise | via adapter | native | native | |
+| `L` | Transitive | via adapter | native | native | |
 
-Additionally, badldap's `query_syntax_converter` needs to be monkey-patched to pass through pre-built ASN1 Filter objects without re-parsing them.
+### BaseDN codes
 
-| Target | Supported codes | Notes |
-|--------|----------------|-------|
-| Filter | All 20 codes | Requires ASN1 adapter + monkey-patch |
-| BaseDN | All 5 codes (C, S, Q, O, X) | Works natively |
-| AttrList | C, R, D, G, g (not W/w/p/e) | W/w/p/e change query semantics, breaking response parsing |
-| AttrEntries | C, R (not O) | AD rejects OID names in modify/add operations |
+| Code | Name | badldap | impacket | ldap3 | Notes |
+|------|------|---------|----------|-------|-------|
+| `C` | Case | native | native | native | |
+| `S` | Spacing | native | native | **FAIL** | ldap3 DN parser rejects spaces |
+| `Q` | Quotes | native | native | **FAIL** | ldap3 DN parser rejects quotes |
+| `O` | OID | native | native | **FAIL** | ldap3 DN parser rejects `oID.` |
+| `X` | Hex value | native | native | native | |
+| `U` | GUID | native | native | native | Alternative DN form, works everywhere |
+| `I` | SID | native | native | native | Alternative DN form, works everywhere |
 
-### ldap3 (used by bloodhound.py)
+### Tools tested
 
-ldap3 validates attribute names in filters against the AD schema (`check_names=True`). This causes obfuscated attribute names (garbage, OID format) to be rejected **before they even reach the server**.
+| Tool | LDAP library | Recommended filter chain | Recommended BaseDN chain |
+|------|-------------|------------------------|------------------------|
+| **bloodyAD** | badldap | All codes (via ASN1 adapter) | All codes |
+| **bloodhound.py** | ldap3 | All except O (or with monkey-patch) | C, X, U, I |
+| **impacket** (GetADUsers, GetUserSPNs, etc) | impacket custom | All except O | All codes |
+| **NetExec** | impacket | All except O | All codes |
+| **Certipy** | ldap3 | All except O (or with monkey-patch) | C, X, U, I |
 
-**Solution:** Monkey-patch `ldap3.protocol.convert.validate_attribute_value` to accept unknown attributes gracefully, falling back to raw encoding when validation fails. This preserves ldap3's type conversion (SID, GUID, datetime, int) while allowing obfuscated filters through.
+### Integration notes
 
-**Important:** Do **not** set `connection.check_names = False` as a workaround — this disables all of ldap3's response parsing (SIDs returned as raw bytes instead of strings, integers as strings, datetimes as strings), which will break most tools that depend on ldap3's automatic type conversion.
+**badldap:** Requires ASN1 adapter (`ldapx.adapters.badldap.ast_to_asn1`) + monkey-patch of `query_syntax_converter` to bypass PEG parser. See bloodyAD integration for reference.
 
-ldap3 also validates BaseDN format via its `safe_dn()` parser, which rejects the `oID.` prefix format used by the OID obfuscation code.
+**ldap3:** Codes `G` and `O` in filters need monkey-patching `ldap3.protocol.convert.validate_attribute_value` to accept unknown attribute names. **Do not** use `connection.check_names = False` — it breaks response parsing (SIDs, GUIDs, datetimes returned as raw bytes/strings). BaseDN codes `S`, `Q`, `O` fail due to ldap3's strict `safe_dn()` parser — use `U` (GUID) or `I` (SID) instead.
 
-| Target | Supported codes | Unsupported | Reason |
-|--------|----------------|-------------|--------|
-| Filter | All 20 codes | — | Works with validator monkey-patch |
-| BaseDN | C, S, Q, X | O | ldap3's DN parser rejects `oID.X.X.X` format |
-| AttrList | C, R, D, G, g | O | ldap3's DN parser rejects OID format in attr names |
-| AttrEntries | C, R | O | Same as above |
+**impacket:** Code `O` (OID) in filters fails due to impacket's filter parser rejecting `oID.` prefix. All other codes work natively. BaseDN accepts all codes including alternative DN forms.
 
 ### General AD limitations (all libraries)
 
-These are server-side limitations from Active Directory itself, regardless of which LDAP library you use:
-
-- **AttrEntries code O (OID):** AD's modify/add handler requires strict attribute names — it does not accept OID format in write operations (only in search filters and attribute lists)
-- **AttrList codes W/w/p/e:** These change what the server returns (wildcard `*`, operational `+`, empty). If your tool expects specific attributes in the response, these will break response parsing
-- **NTLM signing/sealing:** When enabled, LDAP traffic is encrypted at the transport level. The obfuscation still works (it's applied before encryption), but you won't see the obfuscated queries on the wire with tools like Wireshark. Use debug logs or simple bind for wire verification
+- **AttrEntries code O:** AD rejects OID attribute names in modify/add operations
+- **AttrList codes W/w/p/e:** Change query semantics (what server returns), may break response parsing
+- **NTLM signing/sealing:** Obfuscation works (applied before encryption), but not visible on the wire with Wireshark
 
 ## Proxy Mode
 
