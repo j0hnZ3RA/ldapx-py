@@ -131,6 +131,8 @@ ldapx filter -f "(cn=admin)" -c "CO" -o FiltCaseProb=0.8 -o FiltOIDMaxSpaces=4
 | `s` | Substring split | Split equality into substring match |
 | `N` | Names to ANR | Replace ANR-set attributes with `aNR` |
 | `n` | ANR garbage | Add garbage to ANR substring queries |
+| `P` | dnAttributes noise | Randomly toggle `:dn:` on extensible match (AD ignores it, [MS-ADTS 3.1.1.3.1.3.1]) |
+| `L` | Transitive eval | Convert link attr equality to `LDAP_MATCHING_RULE_TRANSITIVE_EVAL` (1941) |
 
 ### BaseDN (`-b`)
 
@@ -141,6 +143,8 @@ ldapx filter -f "(cn=admin)" -c "CO" -o FiltCaseProb=0.8 -o FiltOIDMaxSpaces=4
 | `Q` | Double quotes | Wrap DN values in quotes |
 | `O` | OID attributes | Replace DN attr names with OIDs |
 | `X` | Hex value encoding | Hex-encode DN value characters |
+| `U` | GUID format | Replace DN with `<GUID=hex>` ([MS-ADTS 3.1.1.3.1.2.4]). Requires `-o BaseDNGuid=hex` |
+| `I` | SID format | Replace DN with `<SID=string>` ([MS-ADTS 3.1.1.3.1.2.4]). Requires `-o BaseDNSid=S-1-...` |
 
 ### AttrList (`-a`)
 
