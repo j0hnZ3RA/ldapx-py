@@ -207,7 +207,8 @@ This library provides **programmatic obfuscation** (library + CLI). If you need 
 
 ## Credits
 
-- [Artur Marzano (@Macmod)](https://github.com/Macmod) — Author of the original [ldapx](https://github.com/Macmod/ldapx) in Go, which this project is a Python port of. All obfuscation techniques, middleware architecture, and the parser design originate from his work.
+- [Daniel Bohannon (@danielhbohannon)](https://x.com/danielhbohannon) & [Sabajete Elezaj (@sabi_elezi)](https://x.com/sabi_elezi) — Almost all obfuscation techniques implemented here originate from their [MaLDAPtive](https://www.youtube.com/watch?v=mKRS5Iyy7Qo) research. Kudos to them.
+- [Artur Marzano (@Macmod)](https://github.com/Macmod) — Author of the original [ldapx](https://github.com/Macmod/ldapx) in Go, which implements the MaLDAPtive research into a practical tool. This project is a Python port of his work.
 
 ## License
 
