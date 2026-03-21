@@ -199,6 +199,48 @@ f = rand_case_filter_obf(0.5)(f)
 asn1_filter = ast_to_asn1(f)  # badldap ASN1 Filter object
 ```
 
+## Known Limitations by LDAP Library
+
+ldapx-py returns obfuscated queries as **strings**. How well those strings are accepted depends on the LDAP library your project uses to send them over the wire. Below is a summary of what we found during integration testing against a real Active Directory environment.
+
+### badldap (used by bloodyAD)
+
+badldap's internal PEG parser **cannot parse** most obfuscated filter syntaxes (extensible match, OID attributes with spacing, etc). The solution is to use the `ldapx.adapters.badldap` adapter, which converts the obfuscated AST directly to badldap's ASN1 Filter objects, completely bypassing the parser.
+
+Additionally, badldap's `query_syntax_converter` needs to be monkey-patched to pass through pre-built ASN1 Filter objects without re-parsing them.
+
+| Target | Supported codes | Notes |
+|--------|----------------|-------|
+| Filter | All 20 codes | Requires ASN1 adapter + monkey-patch |
+| BaseDN | All 5 codes (C, S, Q, O, X) | Works natively |
+| AttrList | C, R, D, G, g (not W/w/p/e) | W/w/p/e change query semantics, breaking response parsing |
+| AttrEntries | C, R (not O) | AD rejects OID names in modify/add operations |
+
+### ldap3 (used by bloodhound.py)
+
+ldap3 validates attribute names in filters against the AD schema (`check_names=True`). This causes obfuscated attribute names (garbage, OID format) to be rejected **before they even reach the server**.
+
+**Solution:** Monkey-patch `ldap3.protocol.convert.validate_attribute_value` to accept unknown attributes gracefully, falling back to raw encoding when validation fails. This preserves ldap3's type conversion (SID, GUID, datetime, int) while allowing obfuscated filters through.
+
+**Important:** Do **not** set `connection.check_names = False` as a workaround — this disables all of ldap3's response parsing (SIDs returned as raw bytes instead of strings, integers as strings, datetimes as strings), which will break most tools that depend on ldap3's automatic type conversion.
+
+ldap3 also validates BaseDN format via its `safe_dn()` parser, which rejects the `oID.` prefix format used by the OID obfuscation code.
+
+| Target | Supported codes | Unsupported | Reason |
+|--------|----------------|-------------|--------|
+| Filter | All 20 codes | — | Works with validator monkey-patch |
+| BaseDN | C, S, Q, X | O | ldap3's DN parser rejects `oID.X.X.X` format |
+| AttrList | C, R, D, G, g | O | ldap3's DN parser rejects OID format in attr names |
+| AttrEntries | C, R | O | Same as above |
+
+### General AD limitations (all libraries)
+
+These are server-side limitations from Active Directory itself, regardless of which LDAP library you use:
+
+- **AttrEntries code O (OID):** AD's modify/add handler requires strict attribute names — it does not accept OID format in write operations (only in search filters and attribute lists)
+- **AttrList codes W/w/p/e:** These change what the server returns (wildcard `*`, operational `+`, empty). If your tool expects specific attributes in the response, these will break response parsing
+- **NTLM signing/sealing:** When enabled, LDAP traffic is encrypted at the transport level. The obfuscation still works (it's applied before encryption), but you won't see the obfuscated queries on the wire with tools like Wireshark. Use debug logs or simple bind for wire verification
+
 ## Proxy Mode
 
 This library provides **programmatic obfuscation** (library + CLI). If you need **proxy mode** — intercepting and transforming LDAP packets on the fly between any tool and an LDAP server, without modifying source code — use the Go version:
