@@ -256,6 +256,60 @@ _badldap_connection.query_syntax_converter = _patched_query_syntax_converter
 
 ---
 
+## Obtaining GUID/SID for BaseDN codes U and I
+
+The `U` (GUID) and `I` (SID) BaseDN codes require the objectGUID or objectSid of the base object. These must be obtained via a query before enabling obfuscation. AD accepts both hex and dashed GUID formats.
+
+### ldap3 (bloodhound.py, Certipy)
+
+```python
+import ldap3
+
+conn.search(base_dn, '(objectClass=*)', search_scope=ldap3.BASE,
+            attributes=['objectGUID', 'objectSid'])
+
+guid_hex = conn.response[0]['raw_attributes']['objectGUID'][0].hex()
+sid_str = str(conn.entries[0].objectSid)
+
+import ldapx
+opts = ldapx.Options(BaseDNGuid=guid_hex, BaseDNSid=sid_str)
+```
+
+### impacket (GetADUsers, NetExec)
+
+```python
+from impacket.ldap import ldapasn1 as ldapasn1_impacket
+
+resp = conn.search(searchBase=base_dn, searchFilter='(objectClass=domain)',
+                   attributes=['objectGUID', 'objectSid'])
+
+for item in resp:
+    if isinstance(item, ldapasn1_impacket.SearchResultEntry):
+        for attr in item['attributes']:
+            if str(attr['type']) == 'objectGUID':
+                guid_hex = bytes(attr['vals'][0]).hex()
+            elif str(attr['type']) == 'objectSid':
+                from impacket.ldap.ldaptypes import LDAP_SID
+                sid_str = LDAP_SID(data=bytes(attr['vals'][0])).formatCanonical()
+
+import ldapx
+opts = ldapx.Options(BaseDNGuid=guid_hex, BaseDNSid=sid_str)
+```
+
+### badldap (bloodyAD)
+
+badldap returns GUID as dashed string and SID as string, both usable directly:
+
+```python
+async for entry, err in client.pagedsearch(
+    '(objectClass=domain)', ['objectGUID', 'objectSid']):
+    guid_dashed = entry['attributes']['objectGUID']  # "ba89f0f1-d2f8-487c-..."
+    sid_str = entry['attributes']['objectSid']        # "S-1-5-21-..."
+
+import ldapx
+opts = ldapx.Options(BaseDNGuid=guid_dashed, BaseDNSid=sid_str)
+```
+
 ## General pattern
 
 For any Python tool that uses LDAP, the integration pattern is:
