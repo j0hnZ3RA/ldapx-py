@@ -205,7 +205,7 @@ asn1_filter = ast_to_asn1(f)  # badldap ASN1 Filter object
 
 ## Compatibility Matrix
 
-Active Directory accepts all obfuscation formats — the server-side parser is very permissive. However, each LDAP library has its own **client-side parser** that validates filters and DNs **before** sending them to the server. If the client rejects the obfuscated query, it never reaches AD. This is why compatibility varies by library, and why some codes require workarounds (monkey-patching the client validator or using an ASN1 adapter to bypass the client parser entirely).
+Active Directory accepts all obfuscation formats, the server-side parser is very permissive. However, each LDAP library has its own **client-side parser** that validates filters and DNs **before** sending them to the server. If the client rejects the obfuscated query, it never reaches AD. This is why compatibility varies by library, and why some codes require workarounds (monkey-patching the client validator or using an ASN1 adapter to bypass the client parser entirely).
 
 Below is a full compatibility matrix tested against a real Active Directory environment.
 
@@ -265,7 +265,7 @@ For step-by-step integration examples with each tool (impacket, NetExec, Certipy
 
 **badldap:** Requires ASN1 adapter (`ldapx.adapters.badldap.ast_to_asn1`) + monkey-patch of `query_syntax_converter` to bypass PEG parser. See bloodyAD integration for reference.
 
-**ldap3:** Codes `G` and `O` in filters need monkey-patching `ldap3.protocol.convert.validate_attribute_value` to accept unknown attribute names. **Do not** use `connection.check_names = False` — it breaks response parsing (SIDs, GUIDs, datetimes returned as raw bytes/strings). BaseDN codes `S`, `Q`, `O` fail due to ldap3's strict `safe_dn()` parser — use `U` (GUID) or `I` (SID) instead.
+**ldap3:** Codes `G` and `O` in filters need monkey-patching `ldap3.protocol.convert.validate_attribute_value` to accept unknown attribute names. **Do not** use `connection.check_names = False`, it breaks response parsing (SIDs, GUIDs, datetimes returned as raw bytes/strings). BaseDN codes `S`, `Q`, `O` fail due to ldap3's strict `safe_dn()` parser, use `U` (GUID) or `I` (SID) instead.
 
 **impacket:** Code `O` (OID) in filters fails due to impacket's filter parser rejecting `oID.` prefix. All other codes work natively. BaseDN accepts all codes including alternative DN forms.
 
@@ -277,14 +277,14 @@ For step-by-step integration examples with each tool (impacket, NetExec, Certipy
 
 ## Proxy Mode
 
-This library provides **programmatic obfuscation** (library + CLI). If you need **proxy mode** — intercepting and transforming LDAP packets on the fly between any tool and an LDAP server, without modifying source code — use the Go version:
+This library provides **programmatic obfuscation** (library + CLI). If you need **proxy mode**, intercepting and transforming LDAP packets on the fly between any tool and an LDAP server, without modifying source code, use the Go version:
 
-- [github.com/Macmod/ldapx](https://github.com/Macmod/ldapx) — LDAP proxy with real-time packet transformation, interactive shell, LDAPS/SOCKS support
+- [github.com/Macmod/ldapx](https://github.com/Macmod/ldapx) - LDAP proxy with real-time packet transformation, interactive shell, LDAPS/SOCKS support
 
 ## Credits
 
-- [Daniel Bohannon (@danielhbohannon)](https://x.com/danielhbohannon) & [Sabajete Elezaj (@sabi_elezi)](https://x.com/sabi_elezi) — Almost all obfuscation techniques implemented here originate from their [MaLDAPtive](https://www.youtube.com/watch?v=mKRS5Iyy7Qo) research. Kudos to them.
-- [Artur Marzano (@Macmod)](https://github.com/Macmod) — Author of the original [ldapx](https://github.com/Macmod/ldapx) in Go, which implements the MaLDAPtive research into a practical tool. This project is a Python port of his work.
+- [Daniel Bohannon (@danielhbohannon)](https://x.com/danielhbohannon) & [Sabajete Elezaj (@sabi_elezi)](https://x.com/sabi_elezi) - Almost all obfuscation techniques implemented here originate from their [MaLDAPtive](https://www.youtube.com/watch?v=mKRS5Iyy7Qo) research. Kudos to them.
+- [Artur Marzano (@Macmod)](https://github.com/Macmod) - Author of the original [ldapx](https://github.com/Macmod/ldapx) in Go, which implements the MaLDAPtive research into a practical tool. This project is a Python port of his work.
 
 ## License
 
