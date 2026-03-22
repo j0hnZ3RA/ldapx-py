@@ -576,6 +576,69 @@ def transitive_eval_filter_obf():
     return leaf_applier(mw)
 
 
+# Mapping of objectCategory shortname -> schema CN (without domain suffix)
+# Per MS-ADTS 3.1.1.3.1.3.5, AD resolves shortnames via lDAPDisplayName -> defaultObjectCategory
+_OBJECT_CATEGORY_MAP = {
+    "user": "Person",
+    "person": "Person",
+    "contact": "Person",
+    "computer": "Computer",
+    "group": "Group",
+    "organizationalunit": "Organizational-Unit",
+    "container": "Container",
+    "grouppolicycontainer": "Group-Policy-Container",
+    "domain": "Domain-DNS",
+    "trusteddomain": "Trusted-Domain",
+    "domainpolicy": "Domain-Policy",
+    "msds-groupmanagedserviceaccount": "ms-DS-Group-Managed-Service-Account",
+    "msds-managedserviceaccount": "ms-DS-Managed-Service-Account",
+}
+
+
+def object_category_form_filter_obf(config_nc=""):
+    """Alternate the form of objectCategory values between shortname and full DN.
+
+    Per MS-ADTS 3.1.1.3.1.3.5, AD automatically resolves objectCategory shortnames
+    (like "user", "computer") to their full DN form. This middleware switches between
+    the two forms to change the query appearance without affecting results.
+
+    If config_nc is provided (e.g., "CN=Configuration,DC=sevenkingdoms,DC=local"),
+    shortnames are expanded to full DN. If not provided, full DNs are collapsed
+    to shortnames when possible.
+
+    Args:
+        config_nc: The Configuration naming context DN. When provided, shortnames
+                   are expanded to DN form. When empty, DNs are collapsed to shortnames.
+    """
+    def mw(f):
+        if not isinstance(f, FilterEqualityMatch):
+            return f
+        if f.attribute_desc.lower() != "objectcategory":
+            return f
+
+        value = f.assertion_value
+        value_lower = value.lower()
+
+        if config_nc:
+            # Shortname -> full DN
+            schema_cn = _OBJECT_CATEGORY_MAP.get(value_lower)
+            if schema_cn:
+                full_dn = "CN=%s,CN=Schema,%s" % (schema_cn, config_nc)
+                return FilterEqualityMatch(f.attribute_desc, full_dn)
+        else:
+            # Full DN -> shortname (find the CN= part and reverse-map)
+            if value_lower.startswith("cn=") and ",cn=schema," in value_lower:
+                # Extract the CN value
+                cn_value = value.split(",")[0][3:]  # Remove "CN="
+                # Reverse lookup
+                for shortname, schema_cn in _OBJECT_CATEGORY_MAP.items():
+                    if schema_cn.lower() == cn_value.lower():
+                        return FilterEqualityMatch(f.attribute_desc, shortname)
+        return f
+
+    return leaf_applier(mw)
+
+
 def replace_tautologies_filter_obf():
     greedy_presences = [
         "objectclass", "distinguishedname", "name", "objectguid",

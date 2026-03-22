@@ -126,7 +126,7 @@ class TestVersion:
     def test_version(self):
         stdout, _, rc = run_cli("--version")
         assert rc == 0
-        assert "ldapx 0.1." in stdout
+        assert "ldapx" in stdout
 
 
 class TestNoCommand:

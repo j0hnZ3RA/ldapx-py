@@ -34,6 +34,7 @@ Filter chain codes:
   A - Approx match         x - Extensible match      Z - Prepend zeros
   s - Substring split      N - Names to ANR          n - ANR garbage substring
   P - dnAttributes noise   L - Transitive eval (link attrs)
+  F - objectCategory form  (toggle shortname/DN form)
 
 BaseDN chain codes:
   C - Random case          S - Random spacing        Q - Double quotes
@@ -69,6 +70,7 @@ from .middlewares.filter.obfuscation import (
     rand_prepend_zeros_filter_obf, rand_substring_split_filter_obf,
     anr_attribute_filter_obf, anr_substring_garbage_filter_obf,
     rand_dn_attributes_noise_filter_obf, transitive_eval_filter_obf,
+    object_category_form_filter_obf,
 )
 from .middlewares.basedn.obfuscation import (
     rand_case_basedn_obf, rand_spacing_basedn_obf, double_quotes_basedn_obf,
@@ -149,6 +151,7 @@ def _build_filter_middlewares(opts=None):
         "n": lambda: anr_substring_garbage_filter_obf(opts.get("FiltANRGarbageMaxChars")),
         "P": lambda: rand_dn_attributes_noise_filter_obf(opts.get("FiltDNAttrNoiseProb", 0.5)),
         "L": lambda: transitive_eval_filter_obf(),
+        "F": lambda: object_category_form_filter_obf(opts.get("FiltObjectCategoryConfigNC", "")),
     }
 
 

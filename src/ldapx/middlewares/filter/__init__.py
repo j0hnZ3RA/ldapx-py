@@ -25,6 +25,7 @@ from .obfuscation import (
     equality_to_extensible_filter_obf,
     rand_dn_attributes_noise_filter_obf,
     transitive_eval_filter_obf,
+    object_category_form_filter_obf,
     replace_tautologies_filter_obf,
 )
 
@@ -56,5 +57,6 @@ __all__ = [
     "equality_to_extensible_filter_obf",
     "rand_dn_attributes_noise_filter_obf",
     "transitive_eval_filter_obf",
+    "object_category_form_filter_obf",
     "replace_tautologies_filter_obf",
 ]
