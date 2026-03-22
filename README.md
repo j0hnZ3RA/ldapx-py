@@ -133,6 +133,7 @@ ldapx filter -f "(cn=admin)" -c "CO" -o FiltCaseProb=0.8 -o FiltOIDMaxSpaces=4
 | `n` | ANR garbage | Add garbage to ANR substring queries |
 | `P` | dnAttributes noise | Randomly toggle `:dn:` on extensible match (AD ignores it, [MS-ADTS 3.1.1.3.1.3.1]) |
 | `L` | Transitive eval | Convert link attr equality to `LDAP_MATCHING_RULE_TRANSITIVE_EVAL` (1941) |
+| `F` | objectCategory form | Toggle between shortname and full DN form ([MS-ADTS 3.1.1.3.1.3.5]). Use `-o FiltObjectCategoryConfigNC=CN=Configuration,...` to expand to DN |
 
 ### BaseDN (`-b`)
 
@@ -145,6 +146,7 @@ ldapx filter -f "(cn=admin)" -c "CO" -o FiltCaseProb=0.8 -o FiltOIDMaxSpaces=4
 | `X` | Hex value encoding | Hex-encode DN value characters |
 | `U` | GUID format | Replace DN with `<GUID=hex>` ([MS-ADTS 3.1.1.3.1.2.4]). Requires `-o BaseDNGuid=hex` |
 | `I` | SID format | Replace DN with `<SID=string>` ([MS-ADTS 3.1.1.3.1.2.4]). Requires `-o BaseDNSid=S-1-...` |
+| `W` | WKGUID format | Replace well-known containers (Users, Computers, etc.) with `<WKGUID=guid,dn>` ([MS-ADTS 3.1.1.3.1.2.4]). No pre-query needed |
 
 ### AttrList (`-a`)
 
@@ -236,6 +238,7 @@ Below is a full compatibility matrix tested against a real Active Directory envi
 | `n` | ANR garbage | via adapter | native | native | |
 | `P` | dnAttr noise | via adapter | native | native | |
 | `L` | Transitive | via adapter | native | native | |
+| `F` | objCategory | via adapter | native | native | |
 
 ### BaseDN codes
 
@@ -248,6 +251,7 @@ Below is a full compatibility matrix tested against a real Active Directory envi
 | `X` | Hex value | native | native | native | |
 | `U` | GUID | native | native | native | Alternative DN form, works everywhere |
 | `I` | SID | native | native | native | Alternative DN form, works everywhere |
+| `W` | WKGUID | native | native | native | Well-known containers, no pre-query needed |
 
 ### Tools tested
 

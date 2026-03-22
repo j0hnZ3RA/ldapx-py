@@ -40,6 +40,7 @@ FILTER_CODES = {
     "n": "ANR garbage substring",
     "P": "dnAttributes noise",
     "L": "Transitive eval (link attrs)",
+    "F": "objectCategory form (toggle shortname/DN)",
 }
 
 BASEDN_CODES = {
@@ -50,6 +51,7 @@ BASEDN_CODES = {
     "X": "Hex value encoding",
     "U": "GUID format (requires -o BaseDNGuid=hex)",
     "I": "SID format (requires -o BaseDNSid=S-1-...)",
+    "W": "WKGUID format (well-known containers, auto)",
 }
 
 ATTRLIST_CODES = {
