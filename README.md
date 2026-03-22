@@ -205,7 +205,9 @@ asn1_filter = ast_to_asn1(f)  # badldap ASN1 Filter object
 
 ## Compatibility Matrix
 
-ldapx-py returns obfuscated queries as **strings**. How well those strings are accepted depends on the LDAP library your project uses. Below is a full compatibility matrix tested against a real Active Directory environment.
+Active Directory accepts all obfuscation formats — the server-side parser is very permissive. However, each LDAP library has its own **client-side parser** that validates filters and DNs **before** sending them to the server. If the client rejects the obfuscated query, it never reaches AD. This is why compatibility varies by library, and why some codes require workarounds (monkey-patching the client validator or using an ASN1 adapter to bypass the client parser entirely).
+
+Below is a full compatibility matrix tested against a real Active Directory environment.
 
 ### Filter codes
 
