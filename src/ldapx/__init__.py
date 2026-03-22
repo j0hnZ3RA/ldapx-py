@@ -41,6 +41,7 @@ BaseDN chain codes:
   O - OID attributes       X - Hex value encoding
   U - GUID format (requires BaseDNGuid option)
   I - SID format (requires BaseDNSid option)
+  W - WKGUID format (auto, for well-known containers)
 
 AttrList chain codes:
   C - Random case          R - Reorder list          D - Duplicate
@@ -75,7 +76,7 @@ from .middlewares.filter.obfuscation import (
 from .middlewares.basedn.obfuscation import (
     rand_case_basedn_obf, rand_spacing_basedn_obf, double_quotes_basedn_obf,
     oid_attribute_basedn_obf, guid_basedn_obf, sid_basedn_obf,
-    rand_hex_value_basedn_obf,
+    wkguid_basedn_obf, rand_hex_value_basedn_obf,
 )
 from .middlewares.attrlist.obfuscation import (
     rand_case_attrlist_obf, reorder_list_attrlist_obf, duplicate_attrlist_obf,
@@ -166,6 +167,7 @@ def _build_basedn_middlewares(opts=None):
         "X": lambda: rand_hex_value_basedn_obf(opts.get("BDNHexValueProb")),
         "U": lambda: guid_basedn_obf(opts.get("BaseDNGuid", "")),
         "I": lambda: sid_basedn_obf(opts.get("BaseDNSid", "")),
+        "W": lambda: wkguid_basedn_obf(),
     }
 
 

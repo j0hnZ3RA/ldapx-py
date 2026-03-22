@@ -8,6 +8,7 @@ from .obfuscation import (
     double_quotes_basedn_obf,
     guid_basedn_obf,
     sid_basedn_obf,
+    wkguid_basedn_obf,
     rand_hex_value_basedn_obf,
 )
 
@@ -20,5 +21,6 @@ __all__ = [
     "double_quotes_basedn_obf",
     "guid_basedn_obf",
     "sid_basedn_obf",
+    "wkguid_basedn_obf",
     "rand_hex_value_basedn_obf",
 ]

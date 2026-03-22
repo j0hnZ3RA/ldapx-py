@@ -115,6 +115,43 @@ def sid_basedn_obf(sid):
     return mw
 
 
+# Well-Known GUIDs for standard AD containers (fixed across all AD installations)
+# Per MS-ADTS 3.1.1.3.1.2.4
+_WKGUIDS = {
+    "cn=users,": "a9d1ca15768811d1aded00c04fd8d5cd",
+    "cn=computers,": "aa312825768811d1aded00c04fd8d5cd",
+    "cn=system,": "ab1d30f3768811d1aded00c04fd8d5cd",
+    "cn=domain controllers,": "a361b2ffffd211d1aa4b00c04fd7d83a",
+    "cn=infrastructure,": "2fbac1870ade11d297c400c04fd8d5cd",
+    "cn=deleted objects,": "18e2ea80684f11d2b9aa00c04f79f805",
+    "cn=lostandfound,": "ab8153b7768811d1aded00c04fd8d5cd",
+}
+
+
+def wkguid_basedn_obf():
+    """Replace BaseDN with <WKGUID=guid,domain_dn> when it matches a well-known container.
+
+    Per MS-ADTS 3.1.1.3.1.2.4, AD supports the <WKGUID=guid,object_DN> format
+    for referencing well-known containers like Users, Computers, System, etc.
+    These GUIDs are fixed across all AD installations, so no pre-query is needed.
+
+    If the BaseDN starts with a well-known container (e.g., CN=Users,DC=corp,...),
+    it is replaced with <WKGUID=guid,DC=corp,...>. If the BaseDN is a domain root
+    or doesn't match a well-known container, it is returned unchanged.
+    """
+    def mw(dn):
+        if not dn:
+            return dn
+        dn_lower = dn.lower()
+        for prefix, guid in _WKGUIDS.items():
+            if dn_lower.startswith(prefix):
+                # Extract the domain DN part (everything after the container CN)
+                domain_dn = dn[len(prefix):]
+                return "<WKGUID=%s,%s>" % (guid, domain_dn)
+        return dn
+    return mw
+
+
 def rand_hex_value_basedn_obf(prob=0.3):
     def mw(dn):
         parts = dn.split(",")
