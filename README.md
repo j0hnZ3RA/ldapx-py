@@ -257,6 +257,8 @@ ldapx-py returns obfuscated queries as **strings**. How well those strings are a
 | **NetExec** | impacket | All except O | All codes |
 | **Certipy** | ldap3 | All except O (or with monkey-patch) | C, X, U, I |
 
+For step-by-step integration examples with each tool (impacket, NetExec, Certipy, bloodhound.py, bloodyAD), see **[docs/integration-examples.md](docs/integration-examples.md)**.
+
 ### Integration notes
 
 **badldap:** Requires ASN1 adapter (`ldapx.adapters.badldap.ast_to_asn1`) + monkey-patch of `query_syntax_converter` to bypass PEG parser. See bloodyAD integration for reference.
