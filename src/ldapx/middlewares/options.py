@@ -16,6 +16,8 @@ _DEFAULTS = {
     "FiltTimestampUseComma": False,
     "FiltBoolMaxDepth": 2,
     "FiltBoolProb": 0.5,
+    "FiltDblNegMaxDepth": 10,
+    "FiltDblNegProb": 0.5,
     "FiltBitwiseMaxBits": 31,
     "FiltOIDMaxSpaces": 2,
     "FiltOIDMaxZeros": 2,

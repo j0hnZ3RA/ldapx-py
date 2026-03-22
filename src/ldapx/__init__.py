@@ -138,7 +138,7 @@ def _build_filter_middlewares(opts=None):
         "X": lambda: rand_hex_value_filter_obf(opts.get("FiltHexValueProb")),
         "t": lambda: rand_timestamp_suffix_filter_obf(opts.get("FiltTimestampMaxChars"), string.digits, opts.get("FiltTimestampUseComma")),
         "B": lambda: rand_add_bool_filter_obf(opts.get("FiltBoolMaxDepth"), opts.get("FiltBoolProb")),
-        "D": lambda: rand_dbl_neg_bool_filter_obf(opts.get("FiltBoolMaxDepth"), opts.get("FiltBoolProb")),
+        "D": lambda: rand_dbl_neg_bool_filter_obf(opts.get("FiltDblNegMaxDepth"), opts.get("FiltDblNegProb")),
         "M": lambda: de_morgan_bool_filter_obf(),
         "b": lambda: exact_bitwise_breakout_filter_obf(),
         "d": lambda: bitwise_decompose_filter_obf(opts.get("FiltBitwiseMaxBits")),
