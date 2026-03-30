@@ -290,6 +290,18 @@ This library provides **programmatic obfuscation** (library + CLI). If you need 
 - [Daniel Bohannon (@danielhbohannon)](https://x.com/danielhbohannon) & [Sabajete Elezaj (@sabi_elezi)](https://x.com/sabi_elezi) - Almost all obfuscation techniques implemented here originate from their [MaLDAPtive](https://www.youtube.com/watch?v=mKRS5Iyy7Qo) research. Kudos to them.
 - [Artur Marzano (@Macmod)](https://github.com/Macmod) - Author of the original [ldapx](https://github.com/Macmod/ldapx) in Go, which implements the MaLDAPtive research into a practical tool. This project is a Python port of his work.
 
+## Disclaimer
+
+This tool is provided for **authorized security testing, research, and educational purposes only**. By using this software, you agree to the following:
+
+- You will only use this tool on systems and networks where you have **explicit written authorization** to perform security testing.
+- The author is not responsible for any misuse, damage, service disruption, or any other consequences resulting from the use of this tool. This includes, but is not limited to, crashes, denial of service, data corruption, or unintended behavior on domain controllers or any other systems.
+- Some obfuscation techniques may produce LDAP queries that cause unexpected behavior on certain Active Directory configurations. Always test in a controlled lab environment before using against production systems.
+- The user assumes **full responsibility** for any actions performed with this tool and their consequences.
+- This tool is not intended to facilitate unauthorized access to computer systems. Unauthorized access to computer systems is illegal in most jurisdictions.
+
+If you discover any issues or unexpected behavior, please report them via [GitHub Issues](https://github.com/j0hnZ3RA/ldapx-py/issues).
+
 ## License
 
 MIT - see [LICENSE](LICENSE)
