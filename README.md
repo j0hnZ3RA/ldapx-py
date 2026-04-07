@@ -1,6 +1,7 @@
 # ldapx
 
 [![PyPI version](https://img.shields.io/pypi/v/ldapx)](https://pypi.org/project/ldapx/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/ldapx)](https://pypistats.org/packages/ldapx)
 [![Python versions](https://img.shields.io/pypi/pyversions/ldapx)](https://pypi.org/project/ldapx/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
