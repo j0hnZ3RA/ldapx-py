@@ -71,6 +71,52 @@ class TestFilterObfuscation:
         output = filter_to_query(result)
         assert "~=" in output
 
+    def test_approx_match_skips_bitwise_attr(self):
+        f = query_to_filter("(userAccountControl=512)")
+        result = equality_to_approx_match_filter_obf()(f)
+        output = filter_to_query(result)
+        assert "~=" not in output
+        assert "(userAccountControl=512)" == output
+
+    def test_approx_match_skips_dn_attr(self):
+        f = query_to_filter("(objectCategory=CN=Person,CN=Schema,CN=Configuration,DC=test,DC=local)")
+        result = equality_to_approx_match_filter_obf()(f)
+        output = filter_to_query(result)
+        assert "~=" not in output
+
+    def test_approx_match_skips_oid_attr(self):
+        f = query_to_filter("(objectClass=user)")
+        result = equality_to_approx_match_filter_obf()(f)
+        output = filter_to_query(result)
+        assert "~=" not in output
+        assert "(objectClass=user)" == output
+
+    def test_approx_match_converts_unknown_attr(self):
+        f = query_to_filter("(customAttr=val)")
+        result = equality_to_approx_match_filter_obf()(f)
+        output = filter_to_query(result)
+        assert "~=" in output
+
+    def test_approx_match_custom_exclude(self):
+        f = query_to_filter("(cn=admin)")
+        result = equality_to_approx_match_filter_obf(exclude_attrs=["cn"])(f)
+        output = filter_to_query(result)
+        assert "~=" not in output
+        assert "(cn=admin)" == output
+
+    def test_approx_match_exclude_case_insensitive(self):
+        f = query_to_filter("(CN=admin)")
+        result = equality_to_approx_match_filter_obf(exclude_attrs=["cn"])(f)
+        output = filter_to_query(result)
+        assert "~=" not in output
+
+    def test_approx_match_compound_filter(self):
+        f = query_to_filter("(&(cn=admin)(userAccountControl=512))")
+        result = equality_to_approx_match_filter_obf()(f)
+        output = filter_to_query(result)
+        assert "(cn~=admin)" in output
+        assert "(userAccountControl=512)" in output
+
     def test_extensible_match(self):
         f = query_to_filter("(cn=admin)")
         result = equality_to_extensible_filter_obf()(f)
