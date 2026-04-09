@@ -126,7 +126,7 @@ ldapx filter -f "(cn=admin)" -c "CO" -o FiltCaseProb=0.8 -o FiltOIDMaxSpaces=4
 | `d` | Bitwise decompose | Break bitwise values into individual bits |
 | `I` | Equality by inclusion | `(attr=val)` to range + exclusion |
 | `E` | Equality by exclusion | `(attr=val)` to presence + NOT range |
-| `A` | Approx match | `(attr=val)` to `(attr~=val)` |
+| `A` | Approx match | `(attr=val)` to `(attr~=val)` — auto-skips non-string attributes (integer, bitwise, DN, SID, boolean, OID) |
 | `x` | Extensible match | `(attr=val)` to `(attr:=val)` |
 | `Z` | Prepend zeros | Add leading zeros to numbers/SIDs |
 | `s` | Substring split | Split equality into substring match |
@@ -187,6 +187,24 @@ opts = ldapx.Options(
 )
 
 result = ldapx.obfuscate_filter("(cn=admin)", "COGDR", options=opts)
+```
+
+### Approximate match attribute exclusion
+
+The `A` code automatically skips attributes whose AD syntax doesn't support approximate match (`~=`). This includes integer, bitwise, boolean, DN, SID, and OID-type attributes (e.g., `userAccountControl`, `samAccountType`, `objectCategory`, `objectClass`). Unknown attributes default to string type and are converted normally.
+
+You can also exclude additional attributes manually:
+
+```python
+opts = ldapx.Options(FiltApproxExcludeAttrs=["cn", "sn"])
+result = ldapx.obfuscate_filter("(cn=admin)", "A", options=opts)
+# → (cn=admin)  (skipped because cn is in the exclusion list)
+```
+
+CLI:
+
+```bash
+ldapx filter -f "(cn=admin)" -c "A" -o FiltApproxExcludeAttrs=cn,sn
 ```
 
 ## Adapters
@@ -279,6 +297,11 @@ For step-by-step integration examples with each tool (impacket, NetExec, Certipy
 - **AttrEntries code O:** AD rejects OID attribute names in modify/add operations
 - **AttrList codes W/w/p/e:** Change query semantics (what server returns), may break response parsing
 - **NTLM signing/sealing:** Obfuscation works (applied before encryption), but not visible on the wire with Wireshark
+
+### Chain ordering notes
+
+- **Code `A` before `O`:** If code `O` (OID attributes) runs before `A` (approx match) in the chain, attribute names will already be in OID form (e.g., `1.2.840.113556.1.4.8` instead of `userAccountControl`). Since the auto-detection uses display names, it won't recognize the OID and will convert it to `~=`. Place `A` before `O` in your chain to avoid this (e.g., `"ACOGDR"` not `"COAGDR"`).
+- **OID-form attributes in filters:** If a filter already uses OID attribute names (e.g., from a previous transformation), the `A` code's auto-detection won't identify the attribute type and will treat it as a string. This is a known limitation shared with other token-format-based middlewares.
 
 ## Proxy Mode
 

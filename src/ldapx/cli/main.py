@@ -74,6 +74,9 @@ ATTRENTRIES_CODES = {
 }
 
 
+_LIST_OPTIONS = {"FiltApproxExcludeAttrs"}
+
+
 def _parse_options(option_strings):
     """Parse -o KEY=VALUE strings into an Options dict."""
     if not option_strings:
@@ -84,8 +87,9 @@ def _parse_options(option_strings):
             print(f"Warning: ignoring invalid option '{s}' (expected KEY=VALUE)", file=sys.stderr)
             continue
         key, value = s.split("=", 1)
-        # Try to parse as number or bool
-        if value.lower() in ("true", "false"):
+        if key in _LIST_OPTIONS:
+            overrides[key] = [v.strip() for v in value.split(",") if v.strip()]
+        elif value.lower() in ("true", "false"):
             overrides[key] = value.lower() == "true"
         else:
             try:
