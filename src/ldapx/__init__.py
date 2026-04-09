@@ -144,7 +144,7 @@ def _build_filter_middlewares(opts=None):
         "d": lambda: bitwise_decompose_filter_obf(opts.get("FiltBitwiseMaxBits")),
         "I": lambda: equality_by_inclusion_filter_obf(),
         "E": lambda: equality_by_exclusion_filter_obf(),
-        "A": lambda: equality_to_approx_match_filter_obf(),
+        "A": lambda: equality_to_approx_match_filter_obf(opts.get("FiltApproxExcludeAttrs")),
         "x": lambda: equality_to_extensible_filter_obf(),
         "Z": lambda: rand_prepend_zeros_filter_obf(opts.get("FiltPrependZerosMax")),
         "s": lambda: rand_substring_split_filter_obf(opts.get("FiltSubstringSplitProb")),

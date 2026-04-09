@@ -25,6 +25,7 @@ _DEFAULTS = {
     "FiltSubstringSplitProb": 0.3,
     "FiltPrependZerosMax": 3,
     "FiltANRGarbageMaxChars": 10,
+    "FiltApproxExcludeAttrs": None,
     # BaseDN options
     "BDNCaseProb": 0.5,
     "BDNSpacingMaxSpaces": 2,

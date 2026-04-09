@@ -18,7 +18,8 @@ from ldapx.parser.filter import (
 from ldapx.parser.validation import is_oid, get_attribute_token_format, get_attr_name
 from ldapx.parser.consts import (
     OIDS_MAP, ATTR_CONTEXTS, TOKENDNSTRING, TOKENSID,
-    TOKENSTRINGUNICODE, NUMBER_FORMATS, BITWISE_ATTRS,
+    TOKENSTRING, TOKENSTRINGUNICODE, TOKENSTRINGIA5,
+    NUMBER_FORMATS, BITWISE_ATTRS,
 )
 from ldapx.middlewares.helpers.string import (
     randomly_change_case_string, randomly_hex_encode_string,
@@ -365,9 +366,19 @@ def rand_case_filter_obf(prob=0.5):
 
 # --- Value Obfuscation ---
 
-def equality_to_approx_match_filter_obf():
+_APPROX_COMPATIBLE_FORMATS = frozenset({TOKENSTRING, TOKENSTRINGUNICODE, TOKENSTRINGIA5})
+
+
+def equality_to_approx_match_filter_obf(exclude_attrs=None):
+    _exclude = frozenset(a.lower() for a in (exclude_attrs or []))
+
     def mw(f):
         if isinstance(f, FilterEqualityMatch):
+            attr_lower = f.attribute_desc.lower()
+            if attr_lower in _exclude:
+                return f
+            if get_attribute_token_format(f.attribute_desc) not in _APPROX_COMPATIBLE_FORMATS:
+                return f
             return FilterApproxMatch(f.attribute_desc, f.assertion_value)
         return f
     return leaf_applier(mw)
