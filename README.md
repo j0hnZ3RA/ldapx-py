@@ -141,7 +141,7 @@ ldapx filter -f "(cn=admin)" -c "CO" -o FiltCaseProb=0.8 -o FiltOIDMaxSpaces=4
 | Code | Name | Description |
 |------|------|-------------|
 | `C` | Random case | Randomize case |
-| `S` | Random spacing | Add spaces around DN |
+| `S` | Random spacing | Add spaces around DN. Violates RFC 4514 (leading/trailing whitespace not allowed in DNs), accepted by AD but rejected by RFC-strict servers |
 | `Q` | Double quotes | Wrap DN values in quotes |
 | `O` | OID attributes | Replace DN attr names with OIDs |
 | `X` | Hex value encoding | Hex-encode DN value characters |
