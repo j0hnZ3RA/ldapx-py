@@ -146,7 +146,7 @@ ldapx filter -f "(cn=admin)" -c "CO" -o FiltCaseProb=0.8 -o FiltOIDMaxSpaces=4
 | `O` | OID attributes | Replace DN attr names with OIDs |
 | `X` | Hex value encoding | Hex-encode DN value characters |
 | `U` | GUID format | Replace DN with `<GUID=hex>` ([MS-ADTS 3.1.1.3.1.2.4]). Requires `-o BaseDNGuid=hex` |
-| `I` | SID format | Replace DN with `<SID=string>` ([MS-ADTS 3.1.1.3.1.2.4]). Requires `-o BaseDNSid=S-1-...` |
+| `I` | SID format | Replace DN with `<SID=string>` ([MS-ADTS 3.1.1.3.1.2.4]). Requires `-o BaseDNSid=S-1-...` (library API also accepts SID bytes) |
 | `W` | WKGUID format | Replace well-known containers (Users, Computers, etc.) with `<WKGUID=guid,dn>` ([MS-ADTS 3.1.1.3.1.2.4]). No pre-query needed |
 
 ### AttrList (`-a`)
@@ -188,6 +188,19 @@ opts = ldapx.Options(
 
 result = ldapx.obfuscate_filter("(cn=admin)", "COGDR", options=opts)
 ```
+
+### Parser and escaping notes (v0.5.0)
+
+- `query_to_filter()` is now strict for malformed filters and raises `ValueError` for invalid boolean groups (for example `(&)`, `(|)`, incomplete/truncated subfilter lists).
+- RFC4515 escapes are preserved end-to-end (escaped literals are kept as literals and no longer collapse into wildcard semantics).
+
+### OID prefix options (v0.5.0)
+
+- `FiltOIDIncludePrefix` (default `True`)
+- `BDNOIDIncludePrefix` (default `True`)
+- `AttrsOIDIncludePrefix` (default `True`)
+
+Set them to `False` to emit plain OIDs (`1.2.840...`) instead of `oID.1.2.840...`.
 
 ### Approximate match attribute exclusion
 
@@ -302,6 +315,7 @@ For step-by-step integration examples with each tool (impacket, NetExec, Certipy
 
 - **Code `A` before `O`:** If code `O` (OID attributes) runs before `A` (approx match) in the chain, attribute names will already be in OID form (e.g., `1.2.840.113556.1.4.8` instead of `userAccountControl`). Since the auto-detection uses display names, it won't recognize the OID and will convert it to `~=`. Place `A` before `O` in your chain to avoid this (e.g., `"ACOGDR"` not `"COAGDR"`).
 - **OID-form attributes in filters:** If a filter already uses OID attribute names (e.g., from a previous transformation), the `A` code's auto-detection won't identify the attribute type and will treat it as a string. This is a known limitation shared with other token-format-based middlewares.
+- **`U`/`I`/`W` in BaseDN chains:** Once BaseDN is converted to an alternative form (`<GUID=...>`, `<SID=...>`, `<WKGUID=...>`), DN-shape mutators (`C/S/Q/O/X`) are intentionally skipped to keep the BaseDN valid.
 
 ## Proxy Mode
 
