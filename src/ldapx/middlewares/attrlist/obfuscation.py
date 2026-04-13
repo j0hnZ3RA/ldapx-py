@@ -9,7 +9,7 @@ from ldapx.parser.consts import OIDS_MAP, ATTR_CONTEXTS, ROOTDSE_OPERATIONAL_ATT
 from ldapx.parser.validation import is_oid
 from ldapx.middlewares.helpers.string import (
     randomly_change_case_string, randomly_prepend_zeros_oid,
-    generate_garbage_string,
+    generate_garbage_string, apply_oid_prefix,
 )
 
 
@@ -17,13 +17,6 @@ def rand_case_attrlist_obf(prob=0.5):
     def mw(attrs):
         return [randomly_change_case_string(a, prob) for a in attrs]
     return mw
-
-
-def _apply_oid_prefix(name, include_prefix):
-    has_prefix = name.lower().startswith("oid.")
-    if include_prefix:
-        return name if has_prefix else "oID." + name
-    return name[4:] if has_prefix else name
 
 
 def oid_attribute_attrlist_obf(max_spaces=2, max_zeros=2, include_prefix=True):
@@ -39,7 +32,7 @@ def oid_attribute_attrlist_obf(max_spaces=2, max_zeros=2, include_prefix=True):
                     name += " " * (1 + random.randint(0, max_spaces - 1))
                 if max_zeros > 0:
                     name = randomly_prepend_zeros_oid(name, max_zeros)
-                name = _apply_oid_prefix(name, include_prefix)
+                name = apply_oid_prefix(name, include_prefix)
             result.append(name)
         return result
     return mw

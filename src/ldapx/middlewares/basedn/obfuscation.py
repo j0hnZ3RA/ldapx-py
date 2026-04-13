@@ -8,7 +8,7 @@ from ldapx.parser.consts import OIDS_MAP
 from ldapx.parser.validation import is_oid
 from ldapx.middlewares.helpers.string import (
     randomly_change_case_string, randomly_prepend_zeros_oid,
-    randomly_hex_encode_string,
+    randomly_hex_encode_string, apply_oid_prefix, normalize_sid_value,
 )
 
 
@@ -23,49 +23,6 @@ def _is_alternative_dn_form(dn):
         return False
     token = trimmed[1:eq].upper()
     return token in {"GUID", "SID", "WKGUID"}
-
-
-def _apply_oid_prefix(name, include_prefix):
-    has_prefix = name.lower().startswith("oid.")
-    if include_prefix:
-        return name if has_prefix else "oID." + name
-    return name[4:] if has_prefix else name
-
-
-def _sid_bytes_to_string(sid_bytes):
-    if len(sid_bytes) < 8:
-        return sid_bytes.hex()
-    revision = sid_bytes[0]
-    subauth_count = sid_bytes[1]
-    id_authority = int.from_bytes(sid_bytes[2:8], byteorder="big", signed=False)
-    needed = 8 + (subauth_count * 4)
-    if len(sid_bytes) < needed:
-        return sid_bytes.hex()
-    parts = [f"S-{revision}-{id_authority}"]
-    for i in range(subauth_count):
-        start = 8 + (i * 4)
-        subauth = int.from_bytes(sid_bytes[start:start + 4], byteorder="little", signed=False)
-        parts.append(str(subauth))
-    return "-".join(parts)
-
-
-def _normalize_sid_value(sid):
-    if isinstance(sid, (bytes, bytearray, memoryview)):
-        return _sid_bytes_to_string(bytes(sid))
-    if isinstance(sid, str):
-        text = sid.strip()
-        if text.startswith("S-"):
-            return text
-        if (text.startswith("b'") and text.endswith("'")) or (text.startswith('b"') and text.endswith('"')):
-            try:
-                import ast
-                parsed = ast.literal_eval(text)
-                if isinstance(parsed, (bytes, bytearray)):
-                    return _sid_bytes_to_string(bytes(parsed))
-            except (SyntaxError, ValueError):
-                pass
-        return text
-    return str(sid)
 
 
 def rand_case_basedn_obf(prob=0.5):
@@ -93,7 +50,7 @@ def oid_attribute_basedn_obf(max_spaces=2, max_zeros=2, include_prefix=True):
                         attr_name += " " * (1 + random.randint(0, max_spaces - 1))
                     if max_zeros > 0:
                         attr_name = randomly_prepend_zeros_oid(attr_name, max_zeros)
-                    attr_name = _apply_oid_prefix(attr_name, include_prefix)
+                    attr_name = apply_oid_prefix(attr_name, include_prefix)
                 parts[i] = attr_name + "=" + kv[1]
         return ",".join(parts)
     return mw
@@ -172,7 +129,7 @@ def sid_basedn_obf(sid):
     def mw(dn):
         if not dn or not sid:
             return dn
-        sid_value = _normalize_sid_value(sid)
+        sid_value = normalize_sid_value(sid)
         if not sid_value:
             return dn
         return "<SID=%s>" % sid_value

@@ -28,20 +28,12 @@ from ldapx.middlewares.helpers.string import (
     prepend_zeros_to_sid, prepend_zeros_to_number,
     add_anr_spacing, add_dn_spacing, add_sid_spacing,
     get_next_string, get_previous_string,
-    get_next_sid, get_previous_sid, split_slice,
+    get_next_sid, get_previous_sid, split_slice, apply_oid_prefix,
 )
 from .helpers import leaf_applier, map_to_oid, generate_garbage_filter
 
 
 # --- Attribute Name Obfuscation ---
-
-def _apply_oid_prefix(name, include_prefix):
-    has_prefix = name.lower().startswith("oid.")
-    if include_prefix:
-        return name if has_prefix else "oID." + name
-    return name[4:] if has_prefix else name
-
-
 def oid_attribute_filter_obf(max_spaces=2, max_zeros=2, include_prefix=True):
     def obfuscate(attr):
         name = attr
@@ -53,7 +45,7 @@ def oid_attribute_filter_obf(max_spaces=2, max_zeros=2, include_prefix=True):
                 name += " " * (1 + random.randint(0, max_spaces - 1))
             if max_zeros > 0:
                 name = randomly_prepend_zeros_oid(name, max_zeros)
-            name = _apply_oid_prefix(name, include_prefix)
+            name = apply_oid_prefix(name, include_prefix)
         return name
 
     def mw(f):

@@ -3,6 +3,7 @@ String manipulation helpers - Python port of ldapx middlewares/helpers/string.go
 and middlewares/filter/helpers.go
 """
 
+import ast
 import random
 import re
 import string
@@ -46,6 +47,13 @@ def randomly_prepend_zeros_oid(oid, max_zeros):
             zeros = "0" * (1 + random.randint(0, max_zeros - 1))
             parts[j] = zeros + part
     return ".".join(parts)
+
+
+def apply_oid_prefix(name, include_prefix):
+    has_prefix = name.lower().startswith("oid.")
+    if include_prefix:
+        return name if has_prefix else "oID." + name
+    return name[4:] if has_prefix else name
 
 
 # --- Filter helpers ---
@@ -99,6 +107,41 @@ def prepend_zeros_to_sid(sid, max_zeros):
                     parts[i] = parts[i][:j] + zeros + parts[i][j:]
                     break
     return "-".join(parts)
+
+
+def sid_bytes_to_string(sid_bytes):
+    if len(sid_bytes) < 8:
+        return sid_bytes.hex()
+    revision = sid_bytes[0]
+    subauth_count = sid_bytes[1]
+    id_authority = int.from_bytes(sid_bytes[2:8], byteorder="big", signed=False)
+    needed = 8 + (subauth_count * 4)
+    if len(sid_bytes) < needed:
+        return sid_bytes.hex()
+    parts = [f"S-{revision}-{id_authority}"]
+    for i in range(subauth_count):
+        start = 8 + (i * 4)
+        subauth = int.from_bytes(sid_bytes[start:start + 4], byteorder="little", signed=False)
+        parts.append(str(subauth))
+    return "-".join(parts)
+
+
+def normalize_sid_value(sid):
+    if isinstance(sid, (bytes, bytearray, memoryview)):
+        return sid_bytes_to_string(bytes(sid))
+    if isinstance(sid, str):
+        text = sid.strip()
+        if text.startswith("S-"):
+            return text
+        if (text.startswith("b'") and text.endswith("'")) or (text.startswith('b"') and text.endswith('"')):
+            try:
+                parsed = ast.literal_eval(text)
+                if isinstance(parsed, (bytes, bytearray)):
+                    return sid_bytes_to_string(bytes(parsed))
+            except (SyntaxError, ValueError):
+                pass
+        return text
+    return str(sid)
 
 
 def prepend_zeros_to_number(value, max_zeros):
