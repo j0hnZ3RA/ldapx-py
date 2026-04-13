@@ -86,6 +86,8 @@ def replace_timestamp(value, max_chars, charset, use_comma):
 
 
 def prepend_zeros_to_sid(sid, max_zeros):
+    if max_zeros <= 0:
+        return sid
     parts = sid.split("-")
     for i in range(1, len(parts)):
         num_zeros = random.randint(0, max_zeros - 1)
@@ -100,6 +102,8 @@ def prepend_zeros_to_sid(sid, max_zeros):
 
 
 def prepend_zeros_to_number(value, max_zeros):
+    if max_zeros <= 0:
+        return value
     num_zeros = random.randint(0, max_zeros - 1)
     zeros = "0" * num_zeros
     if value and value[0] == "-":
@@ -108,6 +112,8 @@ def prepend_zeros_to_number(value, max_zeros):
 
 
 def add_anr_spacing(value, max_spaces):
+    if max_spaces <= 0:
+        return value
     spaces_fst = " " * (1 + random.randint(0, max_spaces - 1))
     spaces_eq = " " * (1 + random.randint(0, max_spaces - 1))
     spaces_lst = " " * (1 + random.randint(0, max_spaces - 1))
@@ -128,6 +134,8 @@ def add_anr_spacing(value, max_spaces):
 
 
 def add_dn_spacing(value, max_spaces):
+    if max_spaces <= 0:
+        return value
     parts = value.split(",")
     for i, part in enumerate(parts):
         kv = part.split("=", 1)
@@ -147,6 +155,8 @@ def add_dn_spacing(value, max_spaces):
 
 
 def add_sid_spacing(sid, max_spaces):
+    if max_spaces <= 0:
+        return sid
     parts = sid.split("-")
     if len(parts) >= 3:
         sp1 = " " * random.randint(0, max_spaces)

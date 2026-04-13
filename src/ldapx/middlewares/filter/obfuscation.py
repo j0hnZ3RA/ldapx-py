@@ -35,7 +35,14 @@ from .helpers import leaf_applier, map_to_oid, generate_garbage_filter
 
 # --- Attribute Name Obfuscation ---
 
-def oid_attribute_filter_obf(max_spaces=2, max_zeros=2, include_prefix=False):
+def _apply_oid_prefix(name, include_prefix):
+    has_prefix = name.lower().startswith("oid.")
+    if include_prefix:
+        return name if has_prefix else "oID." + name
+    return name[4:] if has_prefix else name
+
+
+def oid_attribute_filter_obf(max_spaces=2, max_zeros=2, include_prefix=True):
     def obfuscate(attr):
         name = attr
         oid = map_to_oid(attr)
@@ -46,8 +53,7 @@ def oid_attribute_filter_obf(max_spaces=2, max_zeros=2, include_prefix=False):
                 name += " " * (1 + random.randint(0, max_spaces - 1))
             if max_zeros > 0:
                 name = randomly_prepend_zeros_oid(name, max_zeros)
-            if not name.lower().startswith("oid."):
-                name = "oID." + name
+            name = _apply_oid_prefix(name, include_prefix)
         return name
 
     def mw(f):
@@ -98,6 +104,8 @@ def anr_attribute_filter_obf(anr_set):
 def anr_substring_garbage_filter_obf(max_chars=10, garbage_charset=string.ascii_letters):
     def mw(f):
         if isinstance(f, FilterEqualityMatch) and f.attribute_desc == "aNR":
+            if max_chars <= 0:
+                return f
             num_garbage = 1 + random.randint(0, max_chars - 1)
             garbage = generate_garbage_string(num_garbage, garbage_charset)
             return FilterSubstring("aNR", [
@@ -111,6 +119,8 @@ def anr_substring_garbage_filter_obf(max_chars=10, garbage_charset=string.ascii_
 
 def rand_garbage_filter_obf(max_garbage=1, garbage_size=10, charset=string.ascii_letters):
     def applier(filter_):
+        if max_garbage <= 0:
+            return filter_
         if isinstance(filter_, FilterAnd):
             return FilterAnd([applier(sf) for sf in filter_.filters])
         elif isinstance(filter_, FilterOr):
@@ -271,6 +281,8 @@ def bitwise_decompose_filter_obf(max_bits=31):
 
 def rand_add_bool_filter_obf(max_depth=2, prob=0.5):
     def mw(f):
+        if max_depth <= 0:
+            return f
         depth = random.randint(1, max_depth)
         result = f
         for _ in range(depth):
@@ -285,6 +297,8 @@ def rand_add_bool_filter_obf(max_depth=2, prob=0.5):
 
 def rand_dbl_neg_bool_filter_obf(max_depth=2, prob=0.5):
     def mw(f):
+        if max_depth <= 0:
+            return f
         depth = random.randint(1, max_depth)
         result = f
         for _ in range(depth):
@@ -448,6 +462,8 @@ def rand_prepend_zeros_filter_obf(max_zeros=3):
 
 def rand_spacing_filter_obf(max_spaces=3):
     def mw(f):
+        if max_spaces <= 0:
+            return f
         if isinstance(f, FilterEqualityMatch):
             token_type = get_attribute_token_format(f.attribute_desc)
             if f.attribute_desc.lower() == "anr":

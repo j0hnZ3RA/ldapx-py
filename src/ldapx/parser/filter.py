@@ -8,8 +8,6 @@ References:
   - DEFCON32 - MaLDAPtive
 """
 
-import re
-
 
 class Filter:
     pass
@@ -80,11 +78,18 @@ class FilterExtensibleMatch(Filter):
         self.dn_attributes = dn_attributes
 
 
+_ESCAPE_CHARS = frozenset({"*", "(", ")", "\\", "\x00"})
+
+
 def _ldap_escape(s):
-    s = s.replace("\\", "\\\\")
-    s = s.replace("(", "\\(")
-    s = s.replace(")", "\\)")
-    return s
+    """Escape a value according to RFC4515 using \\hh hex escapes."""
+    escaped = []
+    for ch in s:
+        if ch in _ESCAPE_CHARS:
+            escaped.append("\\%02x" % ord(ch))
+        else:
+            escaped.append(ch)
+    return "".join(escaped)
 
 
 def _decode_escaped(s):
@@ -102,6 +107,23 @@ def _decode_escaped(s):
         result.append(s[i])
         i += 1
     return "".join(result)
+
+
+def _has_unescaped_parenthesis(s):
+    """Return True if a simple filter payload contains raw '(' or ')' characters."""
+    i = 0
+    while i < len(s):
+        if s[i] == "\\" and i + 2 < len(s):
+            try:
+                int(s[i + 1:i + 3], 16)
+                i += 3
+                continue
+            except ValueError:
+                pass
+        if s[i] in "()":
+            return True
+        i += 1
+    return False
 
 
 def filter_to_query(f):
@@ -156,8 +178,9 @@ def filter_to_query(f):
             parts.append("dn")
         if f.matching_rule:
             parts.append(_ldap_escape(f.matching_rule))
-        if f.match_value:
-            parts.append("=" + _ldap_escape(f.match_value))
+        # Assertion value can be an empty string and still must keep ':=' syntax.
+        match_value = "" if f.match_value is None else f.match_value
+        parts.append("=" + _ldap_escape(match_value))
         return "(%s)" % ":".join(parts)
 
     raise ValueError(f"Unsupported filter type: {type(f)}")
@@ -204,14 +227,22 @@ def _parse_sub_filters(query):
     current = ""
     depth = 0
     for ch in query:
+        if depth == 0 and ch.isspace():
+            continue
         if ch == "(":
             depth += 1
         elif ch == ")":
             depth -= 1
+            if depth < 0:
+                raise ValueError("Invalid boolean filter: unbalanced parenthesis")
         current += ch
         if depth == 0 and current:
             filters.append(query_to_filter(current))
             current = ""
+    if depth != 0 or current:
+        raise ValueError("Invalid boolean filter: incomplete sub-filter list")
+    if not filters:
+        raise ValueError("Invalid boolean filter: at least one sub-filter is required")
     return filters
 
 
@@ -232,6 +263,8 @@ def _parse_simple_filter(query):
     result_type = None
     state = STATE_ATTR
     inner = query[1:-1]  # strip outer parens
+    if _has_unescaped_parenthesis(inner):
+        raise ValueError("Invalid simple filter format")
 
     i = 0
     while i < len(inner):

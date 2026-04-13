@@ -84,15 +84,33 @@ class TestQueryToFilter:
         with pytest.raises(ValueError):
             query_to_filter("cn=admin")
 
+    @pytest.mark.parametrize("query", [
+        "(&(cn=a)",
+        "(|(cn=a)",
+        "(&(cn=a)(sn=b)",
+        "(|(cn=a)(sn=b)",
+        "(&)",
+        "(|)",
+        "(!(cn=a)(sn=b))",
+        "((cn=a))",
+    ])
+    def test_malformed_raises(self, query):
+        with pytest.raises(ValueError):
+            query_to_filter(query)
+
 
 class TestRoundTrip:
     @pytest.mark.parametrize("query", [
         "(cn=admin)",
         "(objectClass=*)",
         "(cn=a*b*c)",
+        r"(cn=rob\2astark)",
+        r"(cn=\28Robb\29)",
+        r"(cn=\5c)",
         "(age>=18)",
         "(age<=65)",
         "(cn~=admin)",
+        "(cn:=)",
         "(&(cn=a)(sn=b))",
         "(|(cn=a)(sn=b))",
         "(!(cn=a))",

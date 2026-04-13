@@ -90,3 +90,31 @@ class TestOptions:
     def test_defaults(self):
         opts = ldapx.Options.defaults()
         assert opts.get("FiltCaseProb") == 0.5
+
+    def test_zero_filter_limits_do_not_crash(self):
+        opts = ldapx.Options(
+            FiltGarbageMaxElems=0,
+            FiltBoolMaxDepth=0,
+            FiltDblNegMaxDepth=0,
+            FiltSpacingMaxSpaces=0,
+            FiltPrependZerosMax=0,
+            FiltANRGarbageMaxChars=0,
+        )
+        result = ldapx.obfuscate_filter("(cn=admin)", "GBDSZn", options=opts)
+        assert result.startswith("(")
+        assert "=" in result
+        result_num = ldapx.obfuscate_filter("(userAccountControl=512)", "Z", options=opts)
+        assert result_num == "(userAccountControl=512)"
+
+    def test_zero_attrlist_limits_do_not_crash(self):
+        opts = ldapx.Options(
+            AttrsGarbageMaxElems=0,
+            AttrsExistingGarbageMax=0,
+        )
+        result = ldapx.obfuscate_attrlist(["cn", "sn"], "Gg", options=opts)
+        assert result == ["cn", "sn"]
+
+    def test_literal_escaped_asterisk_is_preserved(self):
+        opts = ldapx.Options(FiltCaseProb=0)
+        result = ldapx.obfuscate_filter(r"(cn=rob\2astark)", "C", options=opts)
+        assert result == r"(cn=rob\2astark)"
