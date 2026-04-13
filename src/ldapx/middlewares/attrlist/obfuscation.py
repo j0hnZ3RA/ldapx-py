@@ -19,7 +19,14 @@ def rand_case_attrlist_obf(prob=0.5):
     return mw
 
 
-def oid_attribute_attrlist_obf(max_spaces=2, max_zeros=2, include_prefix=False):
+def _apply_oid_prefix(name, include_prefix):
+    has_prefix = name.lower().startswith("oid.")
+    if include_prefix:
+        return name if has_prefix else "oID." + name
+    return name[4:] if has_prefix else name
+
+
+def oid_attribute_attrlist_obf(max_spaces=2, max_zeros=2, include_prefix=True):
     def mw(attrs):
         result = []
         for attr in attrs:
@@ -32,8 +39,7 @@ def oid_attribute_attrlist_obf(max_spaces=2, max_zeros=2, include_prefix=False):
                     name += " " * (1 + random.randint(0, max_spaces - 1))
                 if max_zeros > 0:
                     name = randomly_prepend_zeros_oid(name, max_zeros)
-                if not name.lower().startswith("oid."):
-                    name = "oID." + name
+                name = _apply_oid_prefix(name, include_prefix)
             result.append(name)
         return result
     return mw
@@ -58,6 +64,8 @@ def garbage_existing_attrlist_obf(max_garbage=2):
     def mw(attrs):
         if not attrs:
             return attrs
+        if max_garbage <= 0:
+            return list(attrs)
         result = list(attrs)
         count = 1 + random.randint(0, max_garbage - 1)
         for _ in range(count):
@@ -70,6 +78,8 @@ def garbage_non_existing_attrlist_obf(max_garbage=2, garbage_size=10, charset=st
     def mw(attrs):
         if not attrs:
             return attrs
+        if max_garbage <= 0:
+            return list(attrs)
         result = list(attrs)
         count = 1 + random.randint(0, max_garbage - 1)
         for _ in range(count):

@@ -34,6 +34,13 @@ class TestFilterObfuscation:
         output = filter_to_query(result)
         assert "oID." in output or "2.5.4.3" in output
 
+    def test_oid_attribute_obfuscation_without_prefix(self):
+        random.seed(42)
+        f = query_to_filter("(cn=admin)")
+        result = oid_attribute_filter_obf(0, 0, include_prefix=False)(f)
+        output = filter_to_query(result)
+        assert output == "(2.5.4.3=admin)"
+
     def test_garbage_obfuscation_wraps_in_or(self):
         random.seed(42)
         f = query_to_filter("(cn=admin)")

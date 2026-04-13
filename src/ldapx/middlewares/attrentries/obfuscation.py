@@ -7,16 +7,27 @@ Used to obfuscate attribute names in Modify and Add operations.
 import random
 
 from ldapx.parser.consts import OIDS_MAP
-from ldapx.parser.validation import is_oid
-from ldapx.middlewares.helpers.string import randomly_change_case_string, randomly_prepend_zeros_oid
+from ldapx.middlewares.helpers.string import randomly_change_case_string
+
+
+def _normalize_values(values):
+    if isinstance(values, list):
+        return list(values)
+    if isinstance(values, tuple):
+        return list(values)
+    return [values]
 
 
 def rand_case_attrentries_obf(prob=0.5):
     def mw(entries):
-        return {
-            randomly_change_case_string(name, prob): values
-            for name, values in entries.items()
-        }
+        result = {}
+        for name, values in entries.items():
+            new_name = randomly_change_case_string(name, prob)
+            if new_name in result:
+                result[new_name].extend(_normalize_values(values))
+            else:
+                result[new_name] = _normalize_values(values)
+        return result
     return mw
 
 
@@ -31,7 +42,11 @@ def oid_attribute_attrentries_obf():
         result = {}
         for name, values in entries.items():
             oid = OIDS_MAP.get(name.lower())
-            result[oid if oid else name] = values
+            out_name = oid if oid else name
+            if out_name in result:
+                result[out_name].extend(_normalize_values(values))
+            else:
+                result[out_name] = _normalize_values(values)
         return result
     return mw
 

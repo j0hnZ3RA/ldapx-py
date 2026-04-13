@@ -269,7 +269,10 @@ conn.search(base_dn, '(objectClass=*)', search_scope=ldap3.BASE,
             attributes=['objectGUID', 'objectSid'])
 
 guid_hex = conn.response[0]['raw_attributes']['objectGUID'][0].hex()
-sid_str = str(conn.entries[0].objectSid)
+# ldap3 may expose objectSid as raw bytes, convert to canonical S-1-... form.
+from ldap3.protocol.formatters.formatters import format_sid
+sid_raw = conn.response[0]['raw_attributes']['objectSid'][0]
+sid_str = format_sid(sid_raw)
 
 import ldapx
 opts = ldapx.Options(BaseDNGuid=guid_hex, BaseDNSid=sid_str)

@@ -33,6 +33,14 @@ class TestRandCaseAttrEntries:
         result = rand_case_attrentries_obf(0.0)(entries)
         assert "cn" in result
 
+    def test_merge_on_case_collision(self, monkeypatch):
+        monkeypatch.setattr("ldapx.middlewares.helpers.string.random.random", lambda: 0.0)
+        monkeypatch.setattr("ldapx.middlewares.helpers.string.random.randint", lambda _a, _b: 0)
+        entries = {"CN": [b"first"], "cn": [b"second"]}
+        result = rand_case_attrentries_obf(1.0)(entries)
+        assert list(result.keys()) == ["cn"]
+        assert result["cn"] == [b"first", b"second"]
+
 
 class TestOIDAttributeAttrEntries:
     def test_replaces_known_attrs(self):
@@ -52,6 +60,12 @@ class TestOIDAttributeAttrEntries:
         entries = {"cn": [b"test"]}
         result = oid_attribute_attrentries_obf()(entries)
         assert list(result.values()) == [[b"test"]]
+
+    def test_merge_on_oid_collision(self):
+        entries = {"cn": [b"a"], "2.5.4.3": [b"b"]}
+        result = oid_attribute_attrentries_obf()(entries)
+        assert list(result.keys()) == ["2.5.4.3"]
+        assert result["2.5.4.3"] == [b"a", b"b"]
 
 
 class TestReorderAttrEntries:

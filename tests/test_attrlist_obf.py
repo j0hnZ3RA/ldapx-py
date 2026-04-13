@@ -43,6 +43,10 @@ class TestOIDAttributeAttrList:
         result = oid_attribute_attrlist_obf(0, 0)(["nonExistentAttr123"])
         assert result == ["nonExistentAttr123"]
 
+    def test_without_prefix(self):
+        result = oid_attribute_attrlist_obf(0, 0, include_prefix=False)(["cn"])
+        assert result == ["2.5.4.3"]
+
 
 class TestDuplicateAttrList:
     def test_adds_duplicates(self):

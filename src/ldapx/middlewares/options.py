@@ -21,7 +21,7 @@ _DEFAULTS = {
     "FiltBitwiseMaxBits": 31,
     "FiltOIDMaxSpaces": 2,
     "FiltOIDMaxZeros": 2,
-    "FiltOIDIncludePrefix": False,
+    "FiltOIDIncludePrefix": True,
     "FiltSubstringSplitProb": 0.3,
     "FiltPrependZerosMax": 3,
     "FiltANRGarbageMaxChars": 10,
@@ -32,7 +32,7 @@ _DEFAULTS = {
     "BDNHexValueProb": 0.3,
     "BDNOIDMaxSpaces": 2,
     "BDNOIDMaxZeros": 2,
-    "BDNOIDIncludePrefix": False,
+    "BDNOIDIncludePrefix": True,
     # AttrList options
     "AttrsCaseProb": 0.5,
     "AttrsDuplicateProb": 0.3,
@@ -40,7 +40,7 @@ _DEFAULTS = {
     "AttrsGarbageSize": 10,
     "AttrsOIDMaxSpaces": 2,
     "AttrsOIDMaxZeros": 2,
-    "AttrsOIDIncludePrefix": False,
+    "AttrsOIDIncludePrefix": True,
     "AttrsExistingGarbageMax": 2,
     # AttrEntries options
     "AttrEntriesCaseProb": 0.5,
